@@ -1,0 +1,199 @@
+/**
+ *  Google Analytics
+ *
+ *  Author: chriscutler@gmail.com
+ *  Date: 2014-02-09
+ */
+preferences {
+	section("What is the Google Analytics Tracking ID?") {
+		input("id", "text", title: "Tracking ID", description:"UA-XXXXXX-Y", required: true)
+	}
+    
+    section ("What do you want to track?") {
+    	input("presences", "capability.presenceSensor", title:"Presence Sensors:", multiple: true, required: false)
+    	input("contacts", "capability.contactSensor", title:"Contact Sensors:", multiple: true, required: false)
+    	input("motions", "capability.motionSensor", title:"Motion Sensors:", multiple: true, required: false)
+        input("switches", "capability.switch", title:"Switches:", multiple: true, required: false)
+    	input("temps", "capability.temperatureMeasurement", title:"Temperature Sensors:", multiple: true, required: false)
+    	input("accelerations", "capability.accelerationSensor", title:"Acceleration Sensors:", multiple: true, required: false)
+    	input("humids", "capability.relativeHumidityMeasurement", title:"Humidity Sensors:", multiple: true, required: false)
+		input("luxs", "capability.illuminanceMeasurement", title:"Illuminance Sensors:", multiple: true, required: false)
+    	input("batteries", "capability.battery", title:"Battery Levels:", multiple: true, required: false)
+        /*
+    	input("locks", "capability.lock", multiple: true, required: false)
+    	input("alarms", "capability.alarm", multiple: true, required: false)
+    	input("smokes", "capability.smokeDetector", multiple: true, required: false)
+    	input("waters", "capability.waterSensor", multiple: true, required: false)
+        */
+    }
+}
+
+def installed() {
+	log.debug "Installed with settings: ${settings}"
+
+	initialize()
+}
+
+def updated() {
+	log.debug "Updated with settings: ${settings}"
+
+	unsubscribe()
+	initialize()
+}
+
+def initialize() {
+	subscribe(presences, "presence", presenceHandler)
+	subscribe(contacts, "contact", contactHandler)
+	subscribe(motions, "motion", motionHandler)
+    subscribe(switches, "switch", switchHandler)
+    //subscribe(switches, "level", switchLevelHandler)
+    //subscribe(switches, "hue", switchLevelHandler)
+    //subscribe(switches, "saturation", switchLevelHandler)
+    subscribe(accelerations, "acceleration", accelerationHandler)
+    //subscribe(locks, "lock", lockHandler)
+    //subscribe(alarms, "alarm", alarmHandler)
+    //subscribe(smokes, "smoke", smokeHandler)
+    //subscribe(smokes, "carbonMonoxide", carbmonHandler)
+    //subscribe(waters, "water", waterHandler)
+
+	subscribe(temps, "temperature", temperatureHandler)
+	subscribe(humids, "humidity", humidityHandler)
+	subscribe(luxs, "illuminance", illuminanceHandler)
+	subscribe(batteries, "battery", batteryHandler)
+    
+    //energy
+    //power
+    //thermostat
+}
+
+def presenceHandler(event) {
+	if (event.value == "present") {
+        postTrack("Presence", event.displayName, "Arrived")
+    } else if (event.value == "not present") {
+        postTrack("Presence", event.displayName, "Left")
+    }
+    
+    postTrack(event.displayName, "Presence Sensors", event.value)
+}
+
+def contactHandler(event) {
+	if (event.value == "open") {
+        postTrack("Contact", event.displayName, "Open")
+    } else if (event.value == "closed") {
+        postTrack("Contact", event.displayName, "Close")
+    }
+    
+    postTrack(event.displayName, "Contact Sensors", event.value)
+}
+
+def motionHandler(event) {
+	if (event.value == "active") {
+        postTrack("Motion", event.displayName, "Active")
+    } else if (event.value == "inactive") {
+        postTrack("Motion", event.displayName, "Inactive")
+    }
+    
+    postTrack(event.displayName, "Motion Sensors", event.value)
+}
+
+def accelerationHandler(event) {
+	if (event.value == "active") {
+        postTrack("Acceleration", event.displayName, "Active")
+    } else if (event.value == "inactive") {
+        postTrack("Acceleration", event.displayName, "Inactive")
+    }
+    
+    postTrack(event.displayName, "Acceleration Sensors", event.value)
+}
+
+def switchHandler(event) {
+	if (event.value == "on") {
+        postTrack("Switch", event.displayName, "On")
+    } else if (event.value == "off") {
+        postTrack("Switch", event.displayName, "Off")
+    }
+    
+    postTrack(event.displayName, "Switches", event.value)
+}
+
+def switchLevelHandler(event) {
+	postTrack("Switch", event.displayName, switches.currentValue("level"))    
+    postTrack(event.displayName, "Switches", switches.currentValue("level"))
+}
+/*
+def lockHandler(event) {
+	if (event.value == "locked") {
+        postTrack("Lock", event.displayName, "Locked")
+    } else if (event.value == "unlocked") {
+        postTrack("Lock", event.displayName, "Unlocked")
+    }
+    
+    postTrack(event.displayName, "Locks", event.value)
+}
+
+def alarmHandler(event) {
+	if (event.value == "on") {
+        postTrack("Alarm", event.displayName, "On")
+    } else if (event.value == "off") {
+        postTrack("Alarm", event.displayName, "Off")
+    }
+    
+    postTrack(event.displayName, "Alarms", event.value)
+}
+
+def smokeHandler(event) {
+	if (event.value == "detected") {
+        postTrack("Smoke", event.displayName, "Smoke Detected")
+        //track when smoke clears...
+    } else if (event.value == "tested") {
+        postTrack("Smoke", event.displayName, "Test")
+    }
+    
+    postTrack(event.displayName, "Smoke Detectors", event.value)
+}
+
+def carbmonHandler(event) {
+	if (event.value == "detected") {
+        postTrack("Carbon Monoxide", event.displayName, "Carbon Monoxide Detected")
+        //track when carbon monoxide clears...
+    } else if (event.value == "tested") {
+        postTrack("Carbon Monoxide", event.displayName, "Test")
+    }
+    
+    postTrack(event.displayName, "Carbon Monoxide Detectors", event.value)
+}
+
+def waterHandler(event) {
+	if (event.value == "true") {
+        postTrack("Water", event.displayName, "Wet")
+    } else if (event.value == "false") {
+        postTrack("Water", event.displayName, "Dry")
+    }
+    
+    postTrack(event.displayName, "Water Sensors", event.value)    
+}
+*/
+
+def temperatureHandler(event) {
+	postTrack("Temperature", event.displayName, event.value + event.unit)
+    postTrack(event.displayName, "Temperature", event.value + event.unit)
+}
+
+def humidityHandler(event) {
+	postTrack("Humidity", event.displayName, event.value + event.unit)
+    postTrack(event.displayName, "Relative Humidity", event.value + event.unit)
+}
+
+def illuminanceHandler(event) {
+	postTrack("Illuminance", event.displayName, event.value + " " + event.unit)
+    postTrack(event.displayName, "Illuminance", event.value + " " + event.unit)
+}
+
+def batteryHandler(event) {
+	postTrack("Battery", event.displayName, event.value + event.unit)
+    postTrack(event.displayName, "Battery Level", event.value + event.unit)
+}
+
+def postTrack(label, category, action) {
+	httpPost("https://www.google-analytics.com/collect", "v=1&tid=" + id + "&cid=1&t=event&el=" + label + "&ec=" + category + "&ea=" + action)
+}
