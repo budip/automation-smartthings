@@ -1,4 +1,4 @@
-smartthings
+SmartThings
 ===========
 
-Smartthings apps
+SmartThings apps
